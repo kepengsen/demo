@@ -1,18 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="./plugins/bootstrap/css/bootstrap.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav {
+            height: 80px;
+            background: #eee;
+        }
+
+        .container-fluid {
+            padding: 0;
+        }
+
+        .form-control {
+            width: 50%;
+            display: inline-block;
+        }
+
+        label {
+            display: inline-block;
+            width: 15%;
+        }
+
+        .inf {
+            margin-left: 10%;
+            margin-top: 10px;
+        }
+
+       td,th{
+           text-align: center;
+       }
+    </style>
     <title>Document</title>
 </head>
-<body>
-    <h1 style="color:red">测试</h1>
-    <button id="btn">按钮</button>
+
+<body ng-app="app" ng-controller="appCtrl" class="page-header-fixed page-sidebar-closed-hide-logo page-container-bg-solid">
+    <div class="body-container">
+        <div class="page-content ">
+            <div class="panel">
+                <div class="panel-body ">
+                    <div class="nav">
+                        <h3 class="pull-left center-block">{{startTime}}</h3>
+                        <button class="btn btn-success pull-right" data-toggle="modal" data-target="#myModal">添加</button>
+                        <button class="btn btn-danger pull-right" ng-click="rmdata()">删除</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover table-condensed">
+                            <thead>
+                                <tr class="info">
+                                    <th>ID</th>
+                                    <th>商品名称</th>
+                                    <th>数量(条)</th>
+                                    <th>尺寸</th>
+                                    <th>重量(斤)</th>
+                                    <th>单价(元)</th>
+                                    <th>合计(元)</th>
+                                    <th>客户名称</th>
+                                    <th>客户手机</th>
+                                    <th>时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="item in dataList" ng-class="{'success':active==item.id}" ng-click="trClick(item)" data-toggle="tooltip" data-placement="top" title="{{item.userdetails}}">
+                                    <td>{{item.id}}</td>
+                                    <td>{{item.name}}</td>
+                                    <td>{{item.num}}</td>
+                                    <td>{{item.size}}</td>
+                                    <td>{{item.heavy}}</td>
+                                    <td>{{item.price}}</td>
+                                    <td style="color:red">{{item.price*item.num}}</td>
+                                    <td>{{item.userName}}</td>
+                                    <td>{{item.userIphone}}</td>
+                                    <td>{{item.createTime}}</td>
+                                </tr>
+                                <tr ng-if="!dataList.length">
+                                    <td colspan="10">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- 添加 -->
+    <div class="modal fade" id="myModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">添加</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="inf">
+                        <label for="">商品名称</label>
+                        <input type="text" class="form-control" ng-model="name">
+                    </div>
+                    <div class="inf">
+                        <label for="">数量</label>
+                        <input type="text" class="form-control" ng-model="num">
+                    </div>
+                    <div class="inf">
+                        <label for="">单价</label>
+                        <input type="text" class="form-control" ng-model="price">
+                    </div>
+                    <div class="inf">
+                        <label for="">尺寸</label>
+                        <input type="text" class="form-control" ng-model="size">
+                    </div>
+                    <div class="inf">
+                        <label for="">重量</label>
+                        <input type="text" class="form-control" ng-model="heavy">
+                    </div>
+                    <div class="inf">
+                        <label for="">客户名称</label>
+                        <input type="text" class="form-control" ng-model="userName">
+                    </div>
+                    <div class="inf">
+                        <label for="">客户电话</label>
+                        <input type="text" class="form-control" ng-model="userIphone">
+                    </div>
+                    <div class="inf">
+                        <label for="">备注</label>
+                        <input type="text" class="form-control" ng-model="userdetails">
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" ng-click="addSave()">添加</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- /.modal -->
 </body>
+
 </html>
+<script src="./plugins/jquery.min.js"></script>
+<script src="./plugins/angular.min.js"></script>
+<script src="./plugins/bootstrap/js/bootstrap.min.js"></script>
 <script>
-    document.getElementById('btn').onclick=function(){
-        alert('被点击')
-    }
+    var app = angular.module('app', []);
+    app.controller('appCtrl', ['$scope', '$filter', function ($scope, $filter) {
+        $scope.myDB = { name: 'xiaoke', version: 1, db: null, };
+        $scope.idNum = 1;
+        $scope.dataList = '';
+        $scope.startTime = $filter("date")(new Date(), 'yyyy-MM-dd HH:mm:ss');
+
+        //打开数据库
+        $scope.openDB = function (name, version, fn) {
+            var version = version || 1;
+            var request = window.indexedDB.open(name, version);
+            request.onerror = function (e) { //打开数据库失败
+                console.log(e.currentTarget.error.message);
+            };
+            request.onsuccess = function (e) {//打开数据库成功
+                $scope.myDB.db = e.target.result;
+                fn(e) && typeof fn == 'function'
+            };
+            request.onupgradeneeded = function (e) {
+                var db = e.target.result;
+                if (!db.objectStoreNames.contains('zhangdan')) {
+                    db.createObjectStore('zhangdan', { keyPath: "id" });
+                }
+                console.log('当前数据库版本更改为： ' + version);
+            };
+        }
+        //添加数据
+        $scope.addData = function (db, storeName) {
+            var transaction = db.transaction(storeName, 'readwrite');
+            var store = transaction.objectStore(storeName);
+            store.add({
+                name: $scope.name, //名称
+                num: $scope.num, //数量
+                price: $scope.price, //单价
+                size: $scope.size,//尺寸
+                heavy: $scope.heavy,//重量
+                userName: $scope.userName,//客户名字
+                userIphone: $scope.userIphone,//客户电话
+                userdetails: $scope.userdetails,//备注详情
+                createTime: $scope.startTime,
+                id: $scope.count + 1
+            });
+           $scope.name='';
+           $scope.num='';
+           $scope.price='';
+           $scope.size='';
+           $scope.heavy='';
+           $scope.userName='';
+           $scope.userIphone='';
+           $scope.userdetails='';
+           $('#myModal').modal('hide');
+        }
+        //删除单条数据
+        $scope.deleteDataByKey = function (db, storeName, value) {
+            var transaction = db.transaction(storeName, 'readwrite');
+            var store = transaction.objectStore(storeName);
+            store.delete(value);
+        }
+
+        //更新数据
+        $scope.updateDataByKey = function (db, storeName, value) {
+            var transaction = db.transaction(storeName, 'readwrite');
+            var store = transaction.objectStore(storeName);
+            var request = store.get(value);
+            request.onsuccess = function (e) {
+                var ret = e.target.result;
+                ret.age = '更新了';
+                store.put(ret);
+            };
+        }
+
+        //查找数据
+        $scope.getDataByKey = function (db, storeName, value) {
+            var transaction = db.transaction(storeName, 'readwrite');
+            var store = transaction.objectStore(storeName);
+            var request = store.get(value);
+            request.onsuccess = function (e) {
+                var ret = e.target.result;
+                console.log(ret);
+            };
+        }
+
+        //清空表
+        $scope.clearObjectStore = function (db, storeName) {
+            var transaction = db.transaction(storeName, 'readwrite');
+            var store = transaction.objectStore(storeName);
+            store.clear();
+        }
+
+        //获取所有数据
+        $scope.getAllDate = function (db, storeName) {
+            var transaction = db.transaction(storeName);
+            var store = transaction.objectStore(storeName);
+            var request = store.openCursor();//打开游标
+            var dataList = new Array();
+            var i = 0;
+            request.onsuccess = function (e) {
+                var cursor = e.target.result;
+                if (cursor) {
+                    dataList[i] = cursor.value;
+                    i++;
+                    cursor.continue();
+                } else {
+                    $scope.ProcessData(dataList)
+                }
+            };
+        }
+        $scope.ProcessData = function (data) {
+            console.log(data)
+            $scope.dataList = data;
+            $scope.count = data.length;
+           
+            console.log('%c一共' + data.length + '条数据', 'color:red');
+            $scope.$apply();
+        }
+
+        //  ------------------------------------------------------------- 
+        //单击tr
+        $scope.trClick = function (item) {
+            $scope.active = item.id;
+            $scope.currentItem = item;
+        }
+        //查看数据并渲染
+        $scope.getData = function () {
+            $scope.openDB($scope.myDB.name, $scope.myDB.version, function () {
+                $scope.getAllDate($scope.myDB.db, 'zhangdan');
+            });
+        }
+        $scope.getData();
+        //新增一条数据
+        $scope.addSave = function () {
+            $scope.openDB($scope.myDB.name, $scope.myDB.version, function () {
+                $scope.addData($scope.myDB.db, 'zhangdan');
+            });
+            $scope.getData();
+        }
+        //删除一条数据
+        $scope.rmdata = function () {
+            if (!$scope.currentItem) return alert('请选择要删除的数据');
+            $scope.openDB($scope.myDB.name, $scope.myDB.version, function () {
+                $scope.deleteDataByKey($scope.myDB.db, 'zhangdan', $scope.currentItem.id);
+            });
+            $scope.getData();
+        }
+
+    }])
 </script>
