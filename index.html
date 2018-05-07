@@ -72,12 +72,14 @@
             border-color: red;
             border-bottom: 0;
         }
-       .upbtn{
-           margin: 8px 20px;
-       }
+
+        .upbtn {
+            margin: 8px 20px;
+        }
     </style>
     <title>我的账本</title>
 </head>
+
 <body ng-app="app" ng-controller="appCtrl" class="page-header-fixed page-sidebar-closed-hide-logo page-container-bg-solid">
     <div class="body-container">
         <div class="page-content ">
@@ -331,7 +333,7 @@
         }
         $scope.ProcessData = function (data) {
             console.log(data)
-            $scope.dataList = data;
+            $scope.dataList = data.sort($scope.compare('createTime'));
             $scope.count = data.length;
             $scope.countData();
             console.log('%c一共' + data.length + '条数据', 'color:red');
@@ -345,31 +347,45 @@
             $scope.currentItem = item;
             console.log(item);
         }
+        //根据对象的某个属性排序
+        $scope.compare=function(propertyName) {
+            return function (object1, object2) {
+                var value1 = object1[propertyName];
+                var value2 = object2[propertyName];
+                if (value2 < value1) {
+                    return 1;
+                } else if (value2 > value1) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        }
         //循环处理数据
-        $scope.countData=function(){
-         if($scope.dataList.length){
-            console.log('开始执行计算数据'+$scope.startTime);
-            var myMonth= $scope.dataList[0].createTime.substring(0,7); //年月
-            var monthArr=new Array(); //所以月份的合计
-            var sum=0;
-            $scope.dataList.forEach(function(item,index){
-               if(item.createTime.substring(0,7)==myMonth){
-                  sum+=item.price*item.num;
-               }else{
-                monthArr.push({date:myMonth,count:sum});
-                myMonth= item.createTime.substring(0,7); //重新获取年月
-                sum=item.price*item.num;  
-               }
-              //如果是同一个月的
-               if(index==$scope.dataList.length-1){
-                   console.log('数据都是同一个月的')
-                monthArr.push({date: item.createTime.substring(0,7),count:sum});
-               }
-            })
-         }
-         $scope.monthData=monthArr;
-         console.log($scope.monthData);
-         return $scope.monthData;
+        $scope.countData = function () {
+            if ($scope.dataList.length) {
+                console.log('开始执行计算数据' + $scope.startTime);
+                var myMonth = $scope.dataList[0].createTime.substring(0, 7); //年月
+                var monthArr = new Array(); //所以月份的合计
+                var sum = 0;
+                $scope.dataList.forEach(function (item, index) {
+                    if (item.createTime.substring(0, 7) == myMonth) {
+                        sum += item.price * item.num;
+                    } else {
+                        monthArr.push({ date: myMonth, count: sum });
+                        myMonth = item.createTime.substring(0, 7); //重新获取年月
+                        sum = item.price * item.num;
+                    }
+                    //如果是同一个月的
+                    if (index == $scope.dataList.length - 1) {
+                        console.log('数据都是同一个月的')
+                        monthArr.push({ date: item.createTime.substring(0, 7), count: sum });
+                    }
+                })
+            }
+            $scope.monthData = monthArr;
+            console.log($scope.monthData);
+            return $scope.monthData;
         }
         //查看数据并渲染
         $scope.getData = function () {
