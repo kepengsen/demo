@@ -347,7 +347,7 @@
         }
         //循环处理数据
         $scope.countData=function(){
-         if($scope.dataList){
+         if($scope.dataList.length){
             console.log('开始执行计算数据'+$scope.startTime);
             var myMonth= $scope.dataList[0].createTime.substring(0,7); //年月
             var monthArr=new Array(); //所以月份的合计
