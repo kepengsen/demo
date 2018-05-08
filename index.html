@@ -138,7 +138,7 @@
                             </div>
                         </div>
                         <div class="main" ng-if="selected==navData[1].id">
-                            <h1>图表</h1>
+                            <div id="main" style="width:80%;height:600px;"></div>
                         </div>
                         <div class="main" ng-if="selected==navData[2].id">
                             <h1>暂无</h1>
@@ -166,11 +166,11 @@
                     </div>
                     <div class="inf">
                         <label for="">数量</label>
-                        <input type="text" class="form-control" ng-model="num">
+                        <input type="text" class="form-control" ng-model="num"  onkeyup="(this.v=function(){this.value=this.value.replace(/[^0-9-]+/,'');}).call(this)" onblur="this.v();">
                     </div>
                     <div class="inf">
                         <label for="">单价</label>
-                        <input type="text" class="form-control" ng-model="price">
+                        <input type="text" class="form-control" ng-model="price"  onkeyup="(this.v=function(){this.value=this.value.replace(/[^0-9-.]+/,'');}).call(this)" onblur="this.v();">
                     </div>
                     <div class="inf">
                         <label for="">尺寸</label>
@@ -209,18 +209,30 @@
 </html>
 <script src="./plugins/jquery.min.js"></script>
 <script src="./plugins/angular.min.js"></script>
+<script src="./plugins/echarts.min.js"></script>
 <script src="./plugins/bootstrap/js/bootstrap.min.js"></script>
 <script>
     var app = angular.module('app', []);
-    app.controller('appCtrl', ['$scope', '$filter', function ($scope, $filter) {
+    app.controller('appCtrl', ['$scope', '$filter', '$interval', function ($scope, $filter, $interval) {
         $scope.myDB = { name: 'xiaoke', version: 1, db: null, };
         $scope.idNum = 1;
         $scope.dataList = '';
         $scope.startTime = $filter("date")(new Date(), 'yyyy-MM-dd HH:mm:ss');
+        $scope.initData=function(){
+            $scope.name = '';
+            $scope.num = '';
+            $scope.price = '';
+            $scope.size = '';
+            $scope.heavy = '';
+            $scope.userName = '';
+            $scope.userIphone = '';
+            $scope.userdetails = '';
+        }
+        $scope.initData();//初始化数据
         //导航数据
         $scope.navData = [
             { id: 001, name: '订单列表' },
-            { id: 002, name: '订单分析' },
+            { id: 002, name: '订单报表' },
             { id: 003, name: '其他' },
         ]
         //nav 选中控制
@@ -229,7 +241,16 @@
         $scope.navClick = function (item) {
             $scope.select = item.id; //选中nav
             $scope.selected = item.id; //显示对应内容
-
+            console.log($scope.selected)
+            if ($scope.selected == 002) {
+                var timer = $interval(function () {
+                    console.log(document.getElementById('main'))
+                    if (document.getElementById('main')) {
+                        $interval.cancel(timer);
+                        $scope.randerEchart();//渲染echart图表
+                    }
+                }, 500);
+            }
         }
         //打开数据库
         $scope.openDB = function (name, version, fn) {
@@ -266,14 +287,7 @@
                 createTime: $scope.startTime,
                 id: $scope.count + 1
             });
-            $scope.name = '';
-            $scope.num = '';
-            $scope.price = '';
-            $scope.size = '';
-            $scope.heavy = '';
-            $scope.userName = '';
-            $scope.userIphone = '';
-            $scope.userdetails = '';
+           $scope.initData();//初始化数据
             $('#myModal').modal('hide');
         }
         //删除单条数据
@@ -346,9 +360,10 @@
             $scope.active = item.id;
             $scope.currentItem = item;
             console.log(item);
+
         }
         //根据对象的某个属性排序
-        $scope.compare=function(propertyName) {
+        $scope.compare = function (propertyName) {
             return function (object1, object2) {
                 var value1 = object1[propertyName];
                 var value2 = object2[propertyName];
@@ -378,7 +393,6 @@
                     }
                     //如果是同一个月的
                     if (index == $scope.dataList.length - 1) {
-                        console.log('数据都是同一个月的')
                         monthArr.push({ date: item.createTime.substring(0, 7), count: sum });
                     }
                 })
@@ -396,6 +410,8 @@
         $scope.getData();
         //新增一条数据
         $scope.addSave = function () {
+            if($scope.num=='')return alert('数量不能为空');
+            if($scope.price=='')return alert('单价不能为空');
             $scope.openDB($scope.myDB.name, $scope.myDB.version, function () {
                 $scope.addData($scope.myDB.db, 'zhangdan');
             });
@@ -410,5 +426,120 @@
             $scope.getData();
         }
 
+        $scope.randerEchart = function () {
+            var myChart = echarts.init(document.getElementById('main'));
+            // 指定图表的配置项和数据
+            var time = [];
+            var count = [];
+            $scope.monthData.forEach(function (item, index) {
+                time.push(item.date);
+                count.push(item.count);
+            });
+            var option = {
+                backgroundColor: '#ccc',
+                title: {
+                    text: '月份销售金额统计'
+                },
+                tooltip: {},
+                grid: {
+                    left: '3%',
+                    right: '15%',
+                    bottom: '10%',
+                    containLabel: true
+                },
+                legend: {
+                    data: ['金额']
+                },
+                toolbox: {
+                    feature: {
+                        dataZoom: {
+                            yAxisIndex: 'none'
+                        },
+                        restore: {},
+                        saveAsImage: {}
+                    }
+                },
+                dataZoom: [{
+                    type: 'inside'
+                }, {
+                    type: 'slider'
+                }],
+                visualMap: {
+                    top: 50,
+                    right: 10,
+                    pieces: [{
+                        gt: 0,
+                        lte: 10000,
+                        color: '#096'
+                    }, {
+                        gt: 10000,
+                        lte: 30000,
+                        color: '#ffde33'
+                    }, {
+                        gt: 30000,
+                        lte: 50000,
+                        color: '#ff9933'
+                    }, {
+                        gt: 50000,
+                        lte: 70000,
+                        color: '#cc0033'
+                    }, {
+                        gt: 70000,
+                        lte: 90000,
+                        color: '#660099'
+                    }, {
+                        gt: 100000,
+                        color: '#7e0023'
+                    }],
+                    outOfRange: {
+                        color: '#999'
+                    }
+                },
+                xAxis: {
+                    data: time
+                },
+                yAxis: {},
+                series: [{
+                    name: '金额',
+                    type: 'bar',
+                    data: count,
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'inside'
+                        }
+                    }, markLine: {
+                        silent: true,
+                        data: [{
+                            yAxis: 5000
+                        }, {
+                            yAxis: 15000
+                        }, {
+                            yAxis: 25000
+                        }, {
+                            yAxis: 35000
+                        }, {
+                            yAxis: 45000
+                        },
+                        {
+                            yAxis: 55000
+                        },
+                        {
+                            yAxis: 65000
+                        },
+                        {
+                            yAxis: 75000
+                        },
+                        {
+                            yAxis: 85000
+                        }
+                        ]
+                    }
+                }]
+            };
+
+            // 使用刚指定的配置项和数据显示图表。
+            myChart.setOption(option);
+        }
     }])
 </script>
